@@ -1,17 +1,19 @@
 {
-    "name": "mongo-manager",
-    "version": "1.0.0",
-    "description": "Mongo Functions",
-    "main": "app.js",
-    "scripts": {
-        "start": "node app.js",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "author": "Sujit Thombare",
-    "license": "ISC",
-    "dependencies": {
-        "jsonfile": "^3.0.1",
-        "lodash": "^4.17.4",
-        "mongodb": "^2.2.31"
-    }
+  "name": "mongo-manager",
+  "version": "1.0.0",
+  "description": "Mongo Functions",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sujit Thombare",
+  "license": "ISC",
+  "dependencies": {
+    "jsonfile": "^3.0.1",
+    "lodash": "^4.17.4",
+    "mongodb": "^2.2.31",
+    "node-excel-to-json": "0.0.3",
+    "xlsx": "^0.11.3"
+  }
 }
