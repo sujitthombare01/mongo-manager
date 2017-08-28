@@ -1,6 +1,7 @@
 var jsonfile = require('jsonfile');
 var MongoClient = require('mongodb').MongoClient;
 var excel2Json = require('node-excel-to-json');
+var XLSX = require('xlsx');
 
 
 // Read all MongoDB Connection Configuration
@@ -82,37 +83,6 @@ var createCollection = function(dbname, collectionName, callback) {
 }
 
 var insertJSON = function(dbname, collectionName, json, callback) {
-    if (!dbname) {
-        callback('Please enter database name.');
-        return;
-    }
-    if (!collectionName) {
-        callback('Please enter collection name.');
-        return;
-    }
-    if (!json) {
-        callback('Please enter json object.');
-        return;
-    }
-    var url = getmongoConnectionString() + dbname;
-
-    MongoClient.connect(url, function(err, db) {
-        if (err) { callback(err); return; }
-        db.collection(collectionName).insert(json, function(err, result) {
-            if (err) { callback(err); return; }
-
-            callback(null, result);
-            db.close();
-        });
-
-
-
-
-    });
-
-}
-
-var saveXLSintoCollection = function(dbname, collectionName, xls_filename, callback) {
         if (!dbname) {
             callback('Please enter database name.');
             return;
@@ -121,29 +91,111 @@ var saveXLSintoCollection = function(dbname, collectionName, xls_filename, callb
             callback('Please enter collection name.');
             return;
         }
-        if (!xls_filename) {
-            callback('Please enter xls_filename.');
+        if (!json) {
+            callback('Please enter json object.');
             return;
         }
-        excel2Json(xls_filename, function(err, output) {
+        var url = getmongoConnectionString() + dbname;
 
+        MongoClient.connect(url, function(err, db) {
             if (err) { callback(err); return; }
+            db.collection(collectionName).insert(json, function(err, result) {
+                if (err) { callback(err); return; }
 
-            insertJSON(dbname, collectionName, output[Object.keys(output)[0]], function(err, results) {
-
-                if (err) {
-                    console.log(err);
-                    return;
-                }
-                callback(null, 'Inserted into Database');
-                console.log('Inserted into Database :' + new Date());
+                callback(null, result);
+                db.close();
             });
+
+
+
 
         });
 
-
     }
-    //get recordset
+    // save data into collection
+var saveXLSintoCollection = function(dbname, collectionName, xls_filename, callback) {
+    if (!dbname) {
+        callback('Please enter database name.');
+        return;
+    }
+    if (!collectionName) {
+        callback('Please enter collection name.');
+        return;
+    }
+    if (!xls_filename) {
+        callback('Please enter xls_filename.');
+        return;
+    }
+
+    var workbook = XLSX.readFile(xls_filename);
+    console.log("File read completed :" + new Date());
+    var jsons = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+    console.log("File converted into JSON :" + new Date());
+
+    insertJSON(dbname, collectionName, jsons, function(err, results) {
+
+        if (err) {
+            console.log(err);
+            return;
+        }
+        callback(null, 'Inserted into Database');
+        console.log('Inserted into Database :' + new Date());
+    });
+
+
+
+
+}
+
+
+
+
+var saveXLSintoCollectionBulk = function(dbname, collectionName, xls_filename, callback) {
+    if (!dbname) {
+        callback('Please enter database name.');
+        return;
+    }
+    if (!collectionName) {
+        callback('Please enter collection name.');
+        return;
+    }
+    if (!xls_filename) {
+        callback('Please enter xls_filename.');
+        return;
+    }
+
+    var workbook = XLSX.readFile(xls_filename);
+    console.log("File read completed :" + new Date());
+    var jsons = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
+    console.log("File converted into JSON :" + new Date());
+    console.log("Number of rows :" + jsons.length);
+
+    var url = getmongoConnectionString() + dbname;
+
+    MongoClient.connect(url, function(err, db) {
+        if (err) { callback(err); return; }
+
+        var ordered = db.collection(collectionName).initializeUnorderedBulkOp();
+        for (var i = 0; i < jsons.length; i++) {
+            ordered.insert(jsons[i]);
+
+        }
+        ordered.execute();
+        console.log('Inserted into Database :' + new Date());
+        db.close();
+    });
+
+
+
+
+
+
+}
+
+
+
+
+//get recordset
 var getRecordsFromCollection = function(dbname, collectionName, query, options, callback) {
 
 
@@ -187,6 +239,7 @@ module.exports = {
     createCollection,
     insertJSON,
     saveXLSintoCollection,
+    saveXLSintoCollectionBulk,
     getRecordsFromCollection
 
 
