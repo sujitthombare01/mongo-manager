@@ -168,23 +168,23 @@ var saveXLSintoCollectionBulk = function(dbname, collectionName, xls_filename, c
     console.log("File read completed :" + new Date());
     var jsons = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
     console.log("File converted into JSON :" + new Date());
-    console.log("Number of rows :" + jsons.length);
+    console.log(jsons);
+    /*
+        var url = getmongoConnectionString() + dbname;
 
-    var url = getmongoConnectionString() + dbname;
+        MongoClient.connect(url, function(err, db) {cls
+            if (err) { callback(err); return; }
 
-    MongoClient.connect(url, function(err, db) {
-        if (err) { callback(err); return; }
+            var ordered = db.collection(collectionName).initializeUnorderedBulkOp();
+            for (var i = 0; i < jsons.length; i++) {
+                ordered.insert(jsons[i]);
 
-        var ordered = db.collection(collectionName).initializeUnorderedBulkOp();
-        for (var i = 0; i < jsons.length; i++) {
-            ordered.insert(jsons[i]);
-
-        }
-        ordered.execute();
-        console.log('Inserted into Database :' + new Date());
-        db.close();
-    });
-
+            }
+            ordered.execute();
+            console.log('Inserted into Database :' + new Date());
+            db.close();
+        });
+    */
 
 
 
@@ -199,6 +199,40 @@ var saveXLSintoCollectionBulk = function(dbname, collectionName, xls_filename, c
 var getRecordsFromCollection = function(dbname, collectionName, query, options, callback) {
 
 
+        if (!dbname) {
+            callback('Please enter database name.');
+            return;
+        }
+        if (!collectionName) {
+            callback('Please enter collection name.');
+            return;
+        }
+
+        var url = getmongoConnectionString() + dbname;
+        MongoClient.connect(url, function(err, db) {
+            if (err) { callback(err); return; }
+            db.collection(collectionName).find(query, options).toArray(function(err, document) {
+
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+
+                callback(null, document);
+                // console.log(document);
+
+                db.close();
+            });
+
+
+
+
+        });
+
+
+    }
+    // function for upload complete xlx into collections
+var uploadCompleteXls = function(dbname, collectionName, xls_filename, callback) {
     if (!dbname) {
         callback('Please enter database name.');
         return;
@@ -207,27 +241,35 @@ var getRecordsFromCollection = function(dbname, collectionName, query, options, 
         callback('Please enter collection name.');
         return;
     }
+    if (!xls_filename) {
+        callback('Please enter xls_filename.');
+        return;
+    }
+    var workbook = XLSX.readFile(xls_filename);
+    for (var s = 0; s < workbook.SheetNames.length; s++) {
+        // console.log('Sheet Name :' + workbook.SheetNames[s]);
+        var sheetname = workbook.SheetNames[s];
+        sheetname = sheetname.replace(' ', '');
+        // console.log('Collection Name :' + sheetname);
+        var json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[s]]);
+        // console.log('JSON Count :' + json.length);
+        var jsonObj = {
+            [sheetname]: json
+        };
 
-    var url = getmongoConnectionString() + dbname;
-    MongoClient.connect(url, function(err, db) {
-        if (err) { callback(err); return; }
-        db.collection(collectionName).find(query, options).toArray(function(err, document) {
+        insertJSON(dbname, collectionName, jsonObj, function(err, results) {
 
             if (err) {
-                console.log(err);
+                callback(err);
                 return;
             }
 
-            callback(null, document);
-            // console.log(document);
-
-            db.close();
+            callback(null, results);
         });
 
 
+    }
 
-
-    });
 
 
 }
@@ -240,7 +282,8 @@ module.exports = {
     insertJSON,
     saveXLSintoCollection,
     saveXLSintoCollectionBulk,
-    getRecordsFromCollection
+    getRecordsFromCollection,
+    uploadCompleteXls
 
 
 }

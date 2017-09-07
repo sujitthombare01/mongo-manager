@@ -41,7 +41,7 @@ mongoUtils.insertJSON('test', 'emp', [{ "name": "xyz1", "age": 20 }, { "name": "
 });
 
 */
-
+/*
 
 //load and insert xls into collection
 var startdate = new Date();
@@ -59,16 +59,27 @@ mongoUtils.saveXLSintoCollectionBulk('test', 'packinglist', 'C:\\Javascript\\tes
     console.log('Time required for Job (in Sec) : ' + ((enddate - startdate) / 1000));
 });
 
-/*
+*/
+
+
 var startdate = new Date();
 console.log('Start :' + startdate);
-var workbook = XLSX.readFile('C:\\Javascript\\test.xlsx');
 
-var json = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
-var enddate = new Date();
+mongoUtils.uploadCompleteXls('test', 'orgdata', 'C:\\Javascript\\excel_json.xls', function(err, results) {
 
-console.log('Time required for Job (in Sec) : ' + ((enddate - startdate) / 1000));
-*/
+    if (err) {
+        console.log(err);
+        return;
+    }
+    //console.log(results);
+    var enddate = new Date();
+    //  console.log('Inserted into Database :' + new Date());
+    console.log('Time required for Job (in Sec) : ' + ((enddate - startdate) / 1000));
+});
+
+
+
+
 /*
 //read database
 var query = {}; //{ 'P_GACactive': 'Active', 'P_CompanyCode': 'ACA' };
